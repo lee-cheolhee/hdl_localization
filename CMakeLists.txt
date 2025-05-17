@@ -52,11 +52,11 @@ if (OPENMP_FOUND)
 endif()
 
 
-set(CMAKE_CUDA_COMPILER "/usr/local/cuda-12/bin/nvcc")
-set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda-12")
-set(CUDA_NVRTC_SHORTHASH "/usr/local/cuda-12/lib64/libnvrtc.so")
-set(CUDA_CUDART_LIBRARY "/usr/local/cuda-12/lib64/libcudart.so")
-set(CUDA_cublas_LIBRARY "/usr/local/cuda-12/targets/x86_64-linux/lib")
+set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
+set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda")
+set(CUDA_NVRTC_SHORTHASH "/usr/local/cuda/lib64/libnvrtc.so")
+set(CUDA_CUDART_LIBRARY "/usr/local/cuda/lib64/libcudart.so")
+set(CUDA_cublas_LIBRARY "/usr/local/cuda/targets/x86_64-linux/lib")
 find_package(CUDA REQUIRED)
 add_definitions(-DUSE_CUDA)
 
