@@ -36,7 +36,7 @@ find_package(catkin REQUIRED COMPONENTS
   hdl_global_localization
 )
 
-find_package(PCL 1.7 REQUIRED)
+find_package(PCL  REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -50,15 +50,6 @@ if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
-
-
-set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
-set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda")
-set(CUDA_NVRTC_SHORTHASH "/usr/local/cuda/lib64/libnvrtc.so")
-set(CUDA_CUDART_LIBRARY "/usr/local/cuda/lib64/libcudart.so")
-set(CUDA_cublas_LIBRARY "/usr/local/cuda/targets/x86_64-linux/lib")
-find_package(CUDA REQUIRED)
-add_definitions(-DUSE_CUDA)
 
 ########################
 ## message generation ##
