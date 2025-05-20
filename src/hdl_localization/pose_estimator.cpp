@@ -15,7 +15,8 @@ namespace hdl_localization {
  * @param cool_time_duration  during "cool time", prediction is not performed
  */
 PoseEstimator::PoseEstimator(pcl::Registration<PointT, PointT>::Ptr& registration, const Eigen::Vector3f& pos, const Eigen::Quaternionf& quat, double cool_time_duration)
-    : registration(registration), cool_time_duration(cool_time_duration) {
+: registration(registration),
+  cool_time_duration(cool_time_duration) {
   last_observation = Eigen::Matrix4f::Identity();
   last_observation.block<3, 3>(0, 0) = quat.toRotationMatrix();
   last_observation.block<3, 1>(0, 3) = pos;
@@ -104,7 +105,7 @@ void PoseEstimator::predict(const ros::Time& stamp, const Eigen::Vector3f& acc, 
  * @brief update the state of the odomety-based pose estimation
  */
 void PoseEstimator::predict_odom(const Eigen::Matrix4f& odom_delta) {
-  if(!odom_ukf) {
+  if (!odom_ukf) {
     Eigen::MatrixXf odom_process_noise = Eigen::MatrixXf::Identity(7, 7);
     Eigen::MatrixXf odom_measurement_noise = Eigen::MatrixXf::Identity(7, 7) * 1e-3;
 
@@ -119,7 +120,7 @@ void PoseEstimator::predict_odom(const Eigen::Matrix4f& odom_delta) {
 
   // invert quaternion if the rotation axis is flipped
   Eigen::Quaternionf quat(odom_delta.block<3, 3>(0, 0));
-  if(odom_quat().coeffs().dot(quat.coeffs()) < 0.0) {
+  if (odom_quat().coeffs().dot(quat.coeffs()) < 0.0) {
     quat.coeffs() *= -1.0f;
   }
 
@@ -152,7 +153,7 @@ pcl::PointCloud<PoseEstimator::PointT>::Ptr PoseEstimator::correct(const ros::Ti
   Eigen::Matrix4f odom_guess;
   Eigen::Matrix4f init_guess = Eigen::Matrix4f::Identity();
 
-  if(!odom_ukf) {
+  if (!odom_ukf) {
     init_guess = imu_guess = matrix();
   } else {
     imu_guess = matrix();
@@ -186,6 +187,10 @@ pcl::PointCloud<PoseEstimator::PointT>::Ptr PoseEstimator::correct(const ros::Ti
   }
 
   pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
+  if (cloud->empty()) {
+    ROS_WARN("Empty cloud, skipping alignment");
+    return pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
+  }
   registration->setInputSource(cloud);
   registration->align(*aligned, init_guess);
 
@@ -193,7 +198,7 @@ pcl::PointCloud<PoseEstimator::PointT>::Ptr PoseEstimator::correct(const ros::Ti
   Eigen::Vector3f p = trans.block<3, 1>(0, 3);
   Eigen::Quaternionf q(trans.block<3, 3>(0, 0));
 
-  if(quat().coeffs().dot(q.coeffs()) < 0.0f) {
+  if (quat().coeffs().dot(q.coeffs()) < 0.0f) {
     q.coeffs() *= -1.0f;
   }
 
@@ -207,7 +212,7 @@ pcl::PointCloud<PoseEstimator::PointT>::Ptr PoseEstimator::correct(const ros::Ti
   ukf->correct(observation);
   imu_pred_error = imu_guess.inverse() * registration->getFinalTransformation();
 
-  if(odom_ukf) {
+  if (odom_ukf) {
     if (observation.tail<4>().dot(odom_ukf->mean.tail<4>()) < 0.0) {
       odom_ukf->mean.tail<4>() *= -1.0;
     }
@@ -269,4 +274,4 @@ const boost::optional<Eigen::Matrix4f>& PoseEstimator::imu_prediction_error() co
 const boost::optional<Eigen::Matrix4f>& PoseEstimator::odom_prediction_error() const {
   return odom_pred_error;
 }
-}
+}  // namespace hdl_localization
