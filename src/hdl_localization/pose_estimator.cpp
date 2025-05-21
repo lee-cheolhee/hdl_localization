@@ -187,10 +187,6 @@ pcl::PointCloud<PoseEstimator::PointT>::Ptr PoseEstimator::correct(const ros::Ti
   }
 
   pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
-  if (cloud->empty()) {
-    ROS_WARN("Empty cloud, skipping alignment");
-    return pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
-  }
   registration->setInputSource(cloud);
   registration->align(*aligned, init_guess);
 

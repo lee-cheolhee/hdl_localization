@@ -241,7 +241,7 @@ private:
     // check for NaN or Inf values in the filtered cloud
     for (const auto& pt : pcl_cloud->points) {
       if (!pcl::isFinite(pt)) {
-        NODELET_ERROR("NaN or Inf detected in filtered point cloud! x=" << pt.x << " y=" << pt.y << " z=" << pt.z);
+        NODELET_ERROR("NaN or Inf detected in filtered point cloud! x=%f, y=%f, z=%f", pt.x, pt.y, pt.z);
         return;
       }
     }
