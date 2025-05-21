@@ -238,6 +238,14 @@ private:
       return;
     }
 
+    // check for NaN or Inf values in the filtered cloud
+    for (const auto& pt : pcl_cloud->points) {
+      if (!pcl::isFinite(pt)) {
+        NODELET_ERROR("NaN or Inf detected in filtered point cloud! x=" << pt.x << " y=" << pt.y << " z=" << pt.z);
+        return;
+      }
+    }
+
     // transform pointcloud into odom_child_frame_id
     std::string tfError;
     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
