@@ -281,31 +281,21 @@ class HdlLocalizationNodelet : public nodelet::Nodelet
         }
 
         const auto& stamp = points_msg->header.stamp;
-        pcl::PointCloud<PointT>::Ptr pcl_cloud(new pcl::PointCloud<PointT>());
-        pcl::fromROSMsg(*points_msg, *pcl_cloud);
+        pcl::PointCloud<PointT>::Ptr cloud_in(new pcl::PointCloud<PointT>());
+        pcl::fromROSMsg(*points_msg, *cloud_in);
 
-        if (pcl_cloud->empty())
+        if (cloud_in->empty())
         {
             NODELET_ERROR("cloud is empty!!");
             return;
         }
 
-        // check for NaN or Inf values in the filtered cloud
-        for (const auto& pt : pcl_cloud->points)
-        {
-            if (!pcl::isFinite(pt))
-            {
-                NODELET_ERROR("NaN or Inf detected in filtered point cloud! x=%f, y=%f, z=%f", pt.x, pt.y, pt.z);
-                return;
-            }
-        }
-
         // transform pointcloud into odom_child_frame_id
         std::string tfError;
         pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
-        if (this->tf_buffer.canTransform(odom_child_frame_id, pcl_cloud->header.frame_id, stamp, ros::Duration(0.1), &tfError))
+        if (this->tf_buffer.canTransform(odom_child_frame_id, cloud_in->header.frame_id, stamp, ros::Duration(0.1), &tfError))
         {
-            if (!pcl_ros::transformPointCloud(odom_child_frame_id, *pcl_cloud, *cloud, this->tf_buffer))
+            if (!pcl_ros::transformPointCloud(odom_child_frame_id, *cloud_in, *cloud, this->tf_buffer))
             {
                 NODELET_ERROR("point cloud cannot be transformed into target frame!!");
                 return;
@@ -318,11 +308,21 @@ class HdlLocalizationNodelet : public nodelet::Nodelet
         }
 
         auto filtered = downsample(cloud);
-        last_scan = filtered;
+        if (filtered->points.size() < 30) {
+              std::cout << "point cloud too small!" << std::endl;
+              return;
+        }
+
+        pcl::PointCloud<PointT>::Ptr filtered_nan(new pcl::PointCloud<PointT>);
+        std::vector<int> indices;
+        // remove Nan Points
+        pcl::removeNaNFromPointCloud(*filtered, *filtered_nan, indices);
+
+        last_scan = filtered_nan;
 
         if (relocalizing)
         {
-            delta_estimater->add_frame(filtered);
+            delta_estimater->add_frame(filtered_nan);
         }
 
         std::lock_guard<std::mutex> estimator_lock(pose_estimator_mutex);
@@ -388,7 +388,7 @@ class HdlLocalizationNodelet : public nodelet::Nodelet
         }
 
         // correct
-        auto aligned = pose_estimator->correct(stamp, filtered);
+        auto aligned = pose_estimator->correct(stamp, filtered_nan);
 
         if (aligned_pub.getNumSubscribers())
         {
